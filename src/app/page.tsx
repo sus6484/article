@@ -1,17 +1,34 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PlayTabs from "@/components/PlayTabs";
 import InputForm from "@/components/InputForm";
 import OutputArea from "@/components/OutputArea";
+import StyleSettings from "@/components/StyleSettings";
+import {
+  ArticleStyleConfig,
+  loadStyleConfig,
+  saveStyleConfig,
+} from "@/lib/article-style";
 import { createNewHand, Hand, HandFormData } from "@/lib/types";
 
 export default function HomePage() {
   const [hands, setHands] = useState<Hand[]>(() => [createNewHand(1)]);
   const [activeHandId, setActiveHandId] = useState<string>(hands[0].id);
+  const [styleConfig, setStyleConfig] = useState<ArticleStyleConfig | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshingArticle, setIsRefreshingArticle] = useState(false);
+  const [isRefreshingTitles, setIsRefreshingTitles] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStyleConfig(loadStyleConfig());
+  }, []);
+
+  const handleStyleChange = (config: ArticleStyleConfig) => {
+    setStyleConfig(config);
+    saveStyleConfig(config);
+  };
 
   const activeHand = hands.find((h) => h.id === activeHandId) ?? hands[0];
 
@@ -58,7 +75,10 @@ export default function HomePage() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ formData: activeHand.formData }),
+        body: JSON.stringify({
+          formData: activeHand.formData,
+          styleConfig: styleConfig ?? undefined,
+        }),
       });
 
       const data = await res.json();
@@ -87,10 +107,45 @@ export default function HomePage() {
     }
   };
 
+  const handleRefreshArticle = async (revisionNote: string) => {
+    if (!activeHand.article) return;
+
+    setIsRefreshingArticle(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/refresh-article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData: activeHand.formData,
+          article: activeHand.article,
+          styleConfig: styleConfig ?? undefined,
+          revisionNote,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "기사 재생성에 실패했습니다.");
+      }
+
+      updateActiveHand({
+        article: data.article,
+        shortsTitles: data.shortsTitles ?? [],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setIsRefreshingArticle(false);
+    }
+  };
+
   const handleRefreshTitles = async () => {
     if (!activeHand.article) return;
 
-    setIsRefreshing(true);
+    setIsRefreshingTitles(true);
     setError(null);
 
     try {
@@ -113,7 +168,7 @@ export default function HomePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
-      setIsRefreshing(false);
+      setIsRefreshingTitles(false);
     }
   };
 
@@ -135,7 +190,13 @@ export default function HomePage() {
         />
 
         <main className="flex flex-1 flex-col gap-8 overflow-auto p-6 xl:flex-row">
-          <div className="flex-1 xl:max-w-xl">
+          <div className="flex flex-1 flex-col gap-4 xl:max-w-xl">
+            {styleConfig && (
+              <StyleSettings
+                styleConfig={styleConfig}
+                onChange={handleStyleChange}
+              />
+            )}
             <InputForm
               formData={activeHand.formData}
               onChange={handleFormChange}
@@ -156,8 +217,10 @@ export default function HomePage() {
               article={activeHand.article}
               shortsTitles={activeHand.shortsTitles}
               onCopyArticle={handleCopyArticle}
+              onRefreshArticle={handleRefreshArticle}
               onRefreshTitles={handleRefreshTitles}
-              isRefreshing={isRefreshing}
+              isRefreshingArticle={isRefreshingArticle}
+              isRefreshingTitles={isRefreshingTitles}
               isGenerating={isGenerating}
             />
           </div>

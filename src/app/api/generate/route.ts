@@ -1,7 +1,8 @@
+import { DEFAULT_ARTICLE_STYLE } from "@/lib/article-style";
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/gemini";
 import {
-  ARTICLE_SYSTEM_PROMPT,
+  getArticleSystemPrompt,
   formatHandDataForPrompt,
   parseShortsTitles,
 } from "@/lib/prompts";
@@ -10,7 +11,7 @@ import { GenerateRequest } from "@/lib/types";
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateRequest = await request.json();
-    const { formData } = body;
+    const { formData, styleConfig } = body;
 
     if (!formData) {
       return NextResponse.json(
@@ -20,9 +21,17 @@ export async function POST(request: NextRequest) {
     }
 
     const handData = formatHandDataForPrompt(formData);
-    const userPrompt = `다음 홀덤 핸드 데이터를 바탕으로 기사를 작성해 줘:\n\n${handData}`;
+    const effectiveStyle = styleConfig?.userCustomized
+      ? styleConfig
+      : DEFAULT_ARTICLE_STYLE;
+    const userPrompt = `다음 홀덤 핸드 데이터를 바탕으로 기사를 작성해 줘. 출력 틀의 섹션 순서와 구조를 그대로 지키고, 입력에 없는 정보는 추측하지 마.
 
-    const rawContent = await generateContent(ARTICLE_SYSTEM_PROMPT, userPrompt);
+${handData}`;
+
+    const rawContent = await generateContent(
+      getArticleSystemPrompt(effectiveStyle),
+      userPrompt
+    );
     const { article, shortsTitles } = parseShortsTitles(rawContent);
 
     return NextResponse.json({

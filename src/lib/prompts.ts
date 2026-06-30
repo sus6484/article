@@ -1,13 +1,9 @@
+import { ArticleStyleConfig, DEFAULT_ARTICLE_STYLE, buildArticleSystemPrompt } from "./article-style";
 import { CardOpenEntry, HandFormData, StreetData } from "./types";
 
-export const ARTICLE_SYSTEM_PROMPT = `너는 프로 홀덤 토너먼트 e스포츠 기자야. 제공된 핸드 데이터를 바탕으로 생동감 있고 전문적인 기사를 작성해 줘. 부가 상황 설명이 함께 제공되면, 핸드 데이터와 자연스럽게 어우러지도록 기사에 반영해 줘. 기사 형식은 다음을 반드시 지켜:
-1) 제목: 대회명, 우승자/탈락자, 핵심 카드 상황을 요약한 강렬한 제목
-2) 첫 문단: 날짜, 대회명, 블라인드 및 엔티 상황, 남은 인원 요약
-3) 블릿 포인트 요약: Pre-flop, Flop, Turn, River 각 스트리트별 포지션·액션 및 보드 카드 정리
-4) 본문: 상황에 대한 극적인 스토리텔링 (누가 어떤 페어를 맞췄고, 턴과 리버에서 어떻게 상황이 역전되거나 확정되었는지 묘사)
-5) 기사 출력 후, 하단에 유튜브 쇼츠용 어그로/후킹이 강한 제목 5개를 '쇼츠 제목 추천'이라는 헤딩 아래에 작성해 줘.
-
-기사는 마크다운 형식으로 작성해 줘. 제목은 **볼드**로 강조해 줘.`;
+export function getArticleSystemPrompt(style?: ArticleStyleConfig): string {
+  return buildArticleSystemPrompt(style ?? DEFAULT_ARTICLE_STYLE);
+}
 
 export const TITLES_ONLY_PROMPT = `너는 프로 홀덤 토너먼트 e스포츠 미디어 담당자야. 제공된 기사 내용을 바탕으로 유튜브 쇼츠용 어그로/후킹이 강한 제목 5개만 작성해 줘.
 

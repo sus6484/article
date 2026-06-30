@@ -1,3 +1,5 @@
+import { ArticleStyleConfig } from "./article-style";
+
 export interface ActionEntry {
   position: string;
   action: string;
@@ -74,9 +76,17 @@ export const createNewHand = (index: number): Hand => ({
 
 export interface GenerateRequest {
   formData: HandFormData;
+  styleConfig?: ArticleStyleConfig;
 }
 
 export interface RefreshTitlesRequest {
   article: string;
   formData: HandFormData;
-};
+}
+
+export interface RefreshArticleRequest {
+  formData: HandFormData;
+  article: string;
+  styleConfig?: ArticleStyleConfig;
+  revisionNote?: string;
+}
