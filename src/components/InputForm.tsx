@@ -1,6 +1,12 @@
 "use client";
 
-import { HandFormData } from "@/lib/types";
+import {
+  ActionEntry,
+  CardOpenEntry,
+  createEmptyCardOpenData,
+  HandFormData,
+  StreetData,
+} from "@/lib/types";
 
 interface InputFormProps {
   formData: HandFormData;
@@ -11,54 +17,150 @@ interface InputFormProps {
 
 function StreetRow({
   label,
-  cardsValue,
-  cardsPlaceholder,
-  actionValue,
-  actionPlaceholder,
-  showAction = true,
-  onCardsChange,
-  onActionChange,
+  streetData,
+  onChange,
+  showCards = true,
 }: {
   label: string;
-  cardsValue: string;
-  cardsPlaceholder: string;
-  actionValue: string;
-  actionPlaceholder: string;
-  showAction?: boolean;
-  onCardsChange: (v: string) => void;
-  onActionChange: (v: string) => void;
+  streetData: StreetData;
+  onChange: (data: StreetData) => void;
+  showCards?: boolean;
 }) {
+  const updateCards = (cards: string) => {
+    onChange({ ...streetData, cards });
+  };
+
+  const updateEntry = (
+    index: number,
+    field: keyof ActionEntry,
+    value: string
+  ) => {
+    const entries = [...streetData.entries];
+    entries[index] = { ...entries[index], [field]: value };
+    onChange({ ...streetData, entries });
+  };
+
+  const addEntry = () => {
+    onChange({
+      ...streetData,
+      entries: [...streetData.entries, { position: "", action: "" }],
+    });
+  };
+
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-brand">
-        {label}
-      </span>
-      <div className={`grid gap-2 ${showAction ? "sm:grid-cols-2" : ""}`}>
-        <div>
-          <label className="mb-1 block text-xs text-gray-500">카드</label>
-          <input
-            type="text"
-            className="input-field"
-            placeholder={cardsPlaceholder}
-            value={cardsValue}
-            onChange={(e) => onCardsChange(e.target.value)}
-          />
-        </div>
-        {showAction && (
-          <div>
-            <label className="mb-1 block text-xs text-gray-500">
-              액션 <span className="text-gray-400">(선택)</span>
-            </label>
+      <div className="mb-3 flex items-center gap-3">
+        <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-brand">
+          {label}
+        </span>
+        {showCards && (
+          <div className="flex flex-1 items-center gap-2">
+            <label className="shrink-0 text-xs text-gray-500">카드</label>
             <input
               type="text"
-              className="input-field"
-              placeholder={actionPlaceholder}
-              value={actionValue}
-              onChange={(e) => onActionChange(e.target.value)}
+              className="input-field flex-1"
+              value={streetData.cards}
+              onChange={(e) => updateCards(e.target.value)}
             />
           </div>
         )}
       </div>
+      <div className="space-y-2">
+        {streetData.entries.map((entry, i) => (
+          <div key={i} className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-xs text-gray-500">포지션</label>
+              <input
+                type="text"
+                className="input-field"
+                value={entry.position}
+                onChange={(e) => updateEntry(i, "position", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-gray-500">액션</label>
+              <input
+                type="text"
+                className="input-field"
+                value={entry.action}
+                onChange={(e) => updateEntry(i, "action", e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addEntry}
+        className="mt-2 flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-100"
+        aria-label="포지션/액션 추가"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+function CardOpenRow({
+  entries,
+  onChange,
+}: {
+  entries: CardOpenEntry[];
+  onChange: (entries: CardOpenEntry[]) => void;
+}) {
+  const updateEntry = (
+    index: number,
+    field: keyof CardOpenEntry,
+    value: string
+  ) => {
+    const next = [...entries];
+    next[index] = { ...next[index], [field]: value };
+    onChange(next);
+  };
+
+  const addEntry = () => {
+    onChange([...entries, { position: "", card: "" }]);
+  };
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+      <div className="mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-brand">
+          CARD OPEN
+        </span>
+      </div>
+      <div className="space-y-2">
+        {entries.map((entry, i) => (
+          <div key={i} className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-xs text-gray-500">포지션</label>
+              <input
+                type="text"
+                className="input-field"
+                value={entry.position}
+                onChange={(e) => updateEntry(i, "position", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-gray-500">카드</label>
+              <input
+                type="text"
+                className="input-field"
+                value={entry.card}
+                onChange={(e) => updateEntry(i, "card", e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addEntry}
+        className="mt-2 flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-100"
+        aria-label="포지션/카드 추가"
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -69,7 +171,10 @@ export default function InputForm({
   onGenerate,
   isGenerating,
 }: InputFormProps) {
-  const update = (field: keyof HandFormData, value: string) => {
+  const update = <K extends keyof HandFormData>(
+    field: K,
+    value: HandFormData[K]
+  ) => {
     onChange({ ...formData, [field]: value });
   };
 
@@ -77,30 +182,35 @@ export default function InputForm({
     <section className="space-y-5">
       <div>
         <h2 className="mb-4 text-lg font-bold text-gray-900">핸드 정보 입력</h2>
-        <p className="text-sm text-gray-500">
-          토너먼트 핸드 데이터를 입력하고 기사를 생성하세요.
-        </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="label-text">대회명</label>
-          <input
-            type="text"
-            className="input-field"
-            placeholder="예: METIS CLOSER in DAEGU (2026.05.25)"
-            value={formData.tournamentName}
-            onChange={(e) => update("tournamentName", e.target.value)}
-          />
-        </div>
+      <div>
+        <label className="label-text">날짜</label>
+        <input
+          type="date"
+          className="input-field"
+          value={formData.date ?? ""}
+          onChange={(e) => update("date", e.target.value)}
+        />
+      </div>
 
+      <div>
+        <label className="label-text">대회명</label>
+        <input
+          type="text"
+          className="input-field"
+          value={formData.tournamentName}
+          onChange={(e) => update("tournamentName", e.target.value)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div>
           <label className="label-text">남은 인원</label>
           <input
             type="number"
             min="1"
             className="input-field"
-            placeholder="예: 8"
             value={formData.remainingPlayers}
             onChange={(e) => update("remainingPlayers", e.target.value)}
           />
@@ -112,85 +222,80 @@ export default function InputForm({
             type="number"
             min="1"
             className="input-field"
-            placeholder="예: 8"
             value={formData.totalPlayers}
             onChange={(e) => update("totalPlayers", e.target.value)}
           />
         </div>
 
-        <div className="sm:col-span-2">
-          <label className="label-text">블라인드 / 엔티</label>
+        <div>
+          <label className="label-text">블라인드</label>
           <input
             type="text"
             className="input-field"
-            placeholder="예: Blinds 50k/100k, Ante 100k"
-            value={formData.blindsAnte}
-            onChange={(e) => update("blindsAnte", e.target.value)}
+            value={formData.blinds}
+            onChange={(e) => update("blinds", e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="label-text">엔티</label>
+          <input
+            type="text"
+            className="input-field"
+            value={formData.ante}
+            onChange={(e) => update("ante", e.target.value)}
           />
         </div>
       </div>
 
-      <div>
-        <label className="label-text">Pre-flop</label>
-        <textarea
-          className="input-field min-h-[80px] resize-y"
-          placeholder="예: UTG 조규목 52만 올인, BTN 이기관 130만 올인"
-          value={formData.preFlop}
-          onChange={(e) => update("preFlop", e.target.value)}
-          rows={3}
-        />
-      </div>
-
-      <div>
-        <label className="label-text">Hole Cards</label>
-        <input
-          type="text"
-          className="input-field"
-          placeholder="예: UTG Jh 8h, BTN Ac Kc"
-          value={formData.holeCards}
-          onChange={(e) => update("holeCards", e.target.value)}
-        />
-      </div>
-
       <div className="space-y-3">
         <StreetRow
+          label="Pre-flop"
+          streetData={formData.preFlop}
+          onChange={(v) => update("preFlop", v)}
+          showCards={false}
+        />
+
+        <StreetRow
           label="Flop"
-          cardsValue={formData.flopCards}
-          cardsPlaceholder="예: 4s Jd Ad"
-          actionValue={formData.flopAction}
-          actionPlaceholder="예: UTG 체크, BTN 50만 벳"
-          onCardsChange={(v) => update("flopCards", v)}
-          onActionChange={(v) => update("flopAction", v)}
+          streetData={formData.flop}
+          onChange={(v) => update("flop", v)}
         />
 
         <StreetRow
           label="Turn"
-          cardsValue={formData.turnCards}
-          cardsPlaceholder="예: Ks"
-          actionValue={formData.turnAction}
-          actionPlaceholder="예: BTN 100만 벳"
-          onCardsChange={(v) => update("turnCards", v)}
-          onActionChange={(v) => update("turnAction", v)}
+          streetData={formData.turn}
+          onChange={(v) => update("turn", v)}
         />
 
         <StreetRow
           label="River"
-          cardsValue={formData.riverCards}
-          cardsPlaceholder="예: Qd"
-          actionValue=""
-          actionPlaceholder=""
-          showAction={false}
-          onCardsChange={(v) => update("riverCards", v)}
-          onActionChange={() => {}}
+          streetData={formData.river}
+          onChange={(v) => update("river", v)}
+        />
+
+        <CardOpenRow
+          entries={formData.cardOpen ?? createEmptyCardOpenData()}
+          onChange={(v) => update("cardOpen", v)}
         />
       </div>
 
-      <div className="pt-2">
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="label-text">상황 설명</label>
+          <textarea
+            className="input-field min-h-[80px] resize-y"
+            placeholder="기사에 반영하고 싶은 부가적인 상황 설명을 입력하세요."
+            rows={3}
+            value={formData.situationDescription ?? ""}
+            onChange={(e) => update("situationDescription", e.target.value)}
+          />
+        </div>
         <button
           type="button"
           onClick={onGenerate}
           disabled={isGenerating}
-          className="btn-primary w-full sm:w-auto"
+          className="btn-primary w-full shrink-0 sm:w-auto"
         >
           {isGenerating ? "기사 작성 중..." : "기사 작성"}
         </button>

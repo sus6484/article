@@ -1,15 +1,31 @@
+export interface ActionEntry {
+  position: string;
+  action: string;
+}
+
+export interface CardOpenEntry {
+  position: string;
+  card: string;
+}
+
+export interface StreetData {
+  cards: string;
+  entries: ActionEntry[];
+}
+
 export interface HandFormData {
+  date: string;
   tournamentName: string;
   remainingPlayers: string;
   totalPlayers: string;
-  blindsAnte: string;
-  preFlop: string;
-  holeCards: string;
-  flopCards: string;
-  flopAction: string;
-  turnCards: string;
-  turnAction: string;
-  riverCards: string;
+  blinds: string;
+  ante: string;
+  preFlop: StreetData;
+  flop: StreetData;
+  turn: StreetData;
+  river: StreetData;
+  cardOpen: CardOpenEntry[];
+  situationDescription: string;
 }
 
 export interface Hand {
@@ -20,18 +36,32 @@ export interface Hand {
   shortsTitles: string[];
 }
 
+export const createEmptyStreetData = (): StreetData => ({
+  cards: "",
+  entries: [
+    { position: "", action: "" },
+    { position: "", action: "" },
+  ],
+});
+
+export const createEmptyCardOpenData = (): CardOpenEntry[] => [
+  { position: "", card: "" },
+  { position: "", card: "" },
+];
+
 export const createEmptyFormData = (): HandFormData => ({
+  date: "",
   tournamentName: "",
   remainingPlayers: "",
   totalPlayers: "",
-  blindsAnte: "",
-  preFlop: "",
-  holeCards: "",
-  flopCards: "",
-  flopAction: "",
-  turnCards: "",
-  turnAction: "",
-  riverCards: "",
+  blinds: "",
+  ante: "",
+  preFlop: createEmptyStreetData(),
+  flop: createEmptyStreetData(),
+  turn: createEmptyStreetData(),
+  river: createEmptyStreetData(),
+  cardOpen: createEmptyCardOpenData(),
+  situationDescription: "",
 });
 
 export const createNewHand = (index: number): Hand => ({
@@ -49,4 +79,4 @@ export interface GenerateRequest {
 export interface RefreshTitlesRequest {
   article: string;
   formData: HandFormData;
-}
+};

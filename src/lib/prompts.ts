@@ -1,9 +1,9 @@
-import { HandFormData } from "./types";
+import { CardOpenEntry, HandFormData, StreetData } from "./types";
 
-export const ARTICLE_SYSTEM_PROMPT = `너는 프로 홀덤 토너먼트 e스포츠 기자야. 제공된 핸드 데이터를 바탕으로 생동감 있고 전문적인 기사를 작성해 줘. 기사 형식은 다음을 반드시 지켜:
+export const ARTICLE_SYSTEM_PROMPT = `너는 프로 홀덤 토너먼트 e스포츠 기자야. 제공된 핸드 데이터를 바탕으로 생동감 있고 전문적인 기사를 작성해 줘. 부가 상황 설명이 함께 제공되면, 핸드 데이터와 자연스럽게 어우러지도록 기사에 반영해 줘. 기사 형식은 다음을 반드시 지켜:
 1) 제목: 대회명, 우승자/탈락자, 핵심 카드 상황을 요약한 강렬한 제목
 2) 첫 문단: 날짜, 대회명, 블라인드 및 엔티 상황, 남은 인원 요약
-3) 블릿 포인트 요약: Pre-flop 상황, Showdown (홀카드), 보드(Flop, Turn, River) 정리
+3) 블릿 포인트 요약: Pre-flop, Flop, Turn, River 각 스트리트별 포지션·액션 및 보드 카드 정리
 4) 본문: 상황에 대한 극적인 스토리텔링 (누가 어떤 페어를 맞췄고, 턴과 리버에서 어떻게 상황이 역전되거나 확정되었는지 묘사)
 5) 기사 출력 후, 하단에 유튜브 쇼츠용 어그로/후킹이 강한 제목 5개를 '쇼츠 제목 추천'이라는 헤딩 아래에 작성해 줘.
 
@@ -14,29 +14,74 @@ export const TITLES_ONLY_PROMPT = `너는 프로 홀덤 토너먼트 e스포츠 
 반드시 아래 JSON 형식으로만 응답해 줘:
 {"titles": ["제목1", "제목2", "제목3", "제목4", "제목5"]}`;
 
+function formatStreet(
+  name: string,
+  street: StreetData,
+  includeCards = true
+): string[] {
+  const lines = [`[${name}]`];
+
+  if (includeCards && street.cards) {
+    lines.push(`카드: ${street.cards}`);
+  }
+
+  for (const entry of street.entries) {
+    if (entry.position || entry.action) {
+      lines.push(
+        `${entry.position || "(포지션)"}: ${entry.action || "(액션)"}`
+      );
+    }
+  }
+
+  if (lines.length === 1) {
+    lines.push("(미입력)");
+  }
+
+  return lines;
+}
+
+function formatCardOpen(entries: CardOpenEntry[]): string[] {
+  const lines = ["[CARD OPEN]"];
+
+  for (const entry of entries) {
+    if (entry.position || entry.card) {
+      lines.push(
+        `${entry.position || "(포지션)"}: ${entry.card || "(카드)"}`
+      );
+    }
+  }
+
+  if (lines.length === 1) {
+    lines.push("(미입력)");
+  }
+
+  return lines;
+}
+
 export function formatHandDataForPrompt(formData: HandFormData): string {
   const lines = [
+    `날짜: ${formData.date || "(미입력)"}`,
     `대회명: ${formData.tournamentName || "(미입력)"}`,
     `남은 인원 / 총 플레이어: ${formData.remainingPlayers || "?"} / ${formData.totalPlayers || "?"}`,
-    `블라인드 / 엔티: ${formData.blindsAnte || "(미입력)"}`,
+    `블라인드: ${formData.blinds || "(미입력)"}`,
+    `엔티: ${formData.ante || "(미입력)"}`,
     "",
-    `[Pre-flop]`,
-    formData.preFlop || "(미입력)",
+    ...formatStreet("Pre-flop", formData.preFlop, false),
     "",
-    `[Hole Cards]`,
-    formData.holeCards || "(미입력)",
+    ...formatStreet("Flop", formData.flop),
     "",
-    `[Flop]`,
-    `카드: ${formData.flopCards || "(미입력)"}`,
-    formData.flopAction ? `액션: ${formData.flopAction}` : "",
+    ...formatStreet("Turn", formData.turn),
     "",
-    `[Turn]`,
-    `카드: ${formData.turnCards || "(미입력)"}`,
-    formData.turnAction ? `액션: ${formData.turnAction}` : "",
+    ...formatStreet("River", formData.river),
     "",
-    `[River]`,
-    `카드: ${formData.riverCards || "(미입력)"}`,
+    ...formatCardOpen(formData.cardOpen ?? []),
   ];
+
+  if (formData.situationDescription?.trim()) {
+    lines.push("");
+    lines.push("[부가 상황 설명]");
+    lines.push(formData.situationDescription.trim());
+  }
 
   return lines.filter((line, i, arr) => !(line === "" && arr[i + 1] === "")).join("\n");
 }

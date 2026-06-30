@@ -123,9 +123,6 @@ export default function HomePage() {
         <h1 className="text-xl font-bold text-gray-900">
           홀덤 기사 &amp; 쇼츠 제목 생성기
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          토너먼트 미디어팀을 위한 AI 기사 작성 도구
-        </p>
       </header>
 
       <div className="flex flex-1 flex-col lg:flex-row">
