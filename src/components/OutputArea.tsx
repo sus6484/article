@@ -7,8 +7,10 @@ interface OutputAreaProps {
   article: string;
   shortsTitles: string[];
   onCopyArticle: () => void;
+  onRefreshArticle: (revisionNote: string) => void;
   onRefreshTitles: () => void;
-  isRefreshing: boolean;
+  isRefreshingArticle: boolean;
+  isRefreshingTitles: boolean;
   isGenerating: boolean;
 }
 
@@ -16,11 +18,14 @@ export default function OutputArea({
   article,
   shortsTitles,
   onCopyArticle,
+  onRefreshArticle,
   onRefreshTitles,
-  isRefreshing,
+  isRefreshingArticle,
+  isRefreshingTitles,
   isGenerating,
 }: OutputAreaProps) {
   const [copied, setCopied] = useState(false);
+  const [revisionNote, setRevisionNote] = useState("");
 
   const handleCopy = async () => {
     onCopyArticle();
@@ -34,18 +39,36 @@ export default function OutputArea({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-gray-900">생성 결과</h2>
           {article && (
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="btn-secondary"
-            >
-              {copied ? "복사 완료!" : "기사 복사"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={revisionNote}
+                onChange={(e) => setRevisionNote(e.target.value)}
+                placeholder="수정 요구사항 (선택)"
+                disabled={isRefreshingArticle}
+                className="input-field w-44 py-1.5 text-xs sm:w-52"
+              />
+              <button
+                type="button"
+                onClick={() => onRefreshArticle(revisionNote)}
+                disabled={isRefreshingArticle}
+                className="btn-secondary"
+              >
+                {isRefreshingArticle ? "생성 중..." : "기사 새로고침"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="btn-secondary"
+              >
+                {copied ? "복사 완료!" : "기사 복사"}
+              </button>
+            </div>
           )}
         </div>
 
         <div className="min-h-[200px] rounded-lg border border-gray-200 bg-white p-5">
-          {isGenerating ? (
+          {isGenerating || isRefreshingArticle ? (
             <div className="flex h-40 items-center justify-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
@@ -73,16 +96,16 @@ export default function OutputArea({
             <button
               type="button"
               onClick={onRefreshTitles}
-              disabled={isRefreshing}
+              disabled={isRefreshingTitles}
               className="btn-secondary"
             >
-              {isRefreshing ? "생성 중..." : "제목 새로고침"}
+              {isRefreshingTitles ? "생성 중..." : "제목 새로고침"}
             </button>
           )}
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-5">
-          {isRefreshing ? (
+          {isRefreshingTitles ? (
             <div className="flex h-24 items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
             </div>

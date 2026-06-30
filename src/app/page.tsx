@@ -10,11 +10,13 @@ import {
   loadStyleConfig,
   saveStyleConfig,
 } from "@/lib/article-style";
+import { loadHandsData, saveHandsData } from "@/lib/hands-storage";
 import { createNewHand, Hand, HandFormData } from "@/lib/types";
 
 export default function HomePage() {
   const [hands, setHands] = useState<Hand[]>(() => [createNewHand(1)]);
-  const [activeHandId, setActiveHandId] = useState<string>(hands[0].id);
+  const [activeHandId, setActiveHandId] = useState<string>("");
+  const [hydrated, setHydrated] = useState(false);
   const [styleConfig, setStyleConfig] = useState<ArticleStyleConfig | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRefreshingArticle, setIsRefreshingArticle] = useState(false);
@@ -22,8 +24,18 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const { hands: savedHands, activeHandId: savedActiveHandId } =
+      loadHandsData();
+    setHands(savedHands);
+    setActiveHandId(savedActiveHandId);
     setStyleConfig(loadStyleConfig());
+    setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated || !activeHandId) return;
+    saveHandsData(hands, activeHandId);
+  }, [hands, activeHandId, hydrated]);
 
   const handleStyleChange = (config: ArticleStyleConfig) => {
     setStyleConfig(config);

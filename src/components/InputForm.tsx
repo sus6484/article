@@ -280,25 +280,25 @@ export default function InputForm({
         />
       </div>
 
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label className="label-text">상황 설명</label>
+      <div className="pt-2">
+        <label className="label-text">상황 설명</label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           <textarea
-            className="input-field min-h-[80px] resize-y"
+            className="input-field min-h-0 flex-1 resize-none py-2.5"
             placeholder="기사에 반영하고 싶은 부가적인 상황 설명을 입력하세요."
-            rows={3}
+            rows={1}
             value={formData.situationDescription ?? ""}
             onChange={(e) => update("situationDescription", e.target.value)}
           />
+          <button
+            type="button"
+            onClick={onGenerate}
+            disabled={isGenerating}
+            className="btn-primary w-full shrink-0 sm:w-auto"
+          >
+            {isGenerating ? "기사 작성 중..." : "기사 작성"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={isGenerating}
-          className="btn-primary w-full shrink-0 sm:w-auto"
-        >
-          {isGenerating ? "기사 작성 중..." : "기사 작성"}
-        </button>
       </div>
     </section>
   );
