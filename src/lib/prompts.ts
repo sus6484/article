@@ -1,4 +1,6 @@
 import { ArticleStyleConfig, DEFAULT_ARTICLE_STYLE, buildArticleSystemPrompt } from "./article-style";
+import { formatBlindsOrAnte } from "./chip-format";
+import { formatDateForPrompt } from "./date-format";
 import { CardOpenEntry, HandFormData, StreetData } from "./types";
 
 export function getArticleSystemPrompt(style?: ArticleStyleConfig): string {
@@ -56,11 +58,11 @@ function formatCardOpen(entries: CardOpenEntry[]): string[] {
 
 export function formatHandDataForPrompt(formData: HandFormData): string {
   const lines = [
-    `날짜: ${formData.date || "(미입력)"}`,
+    `날짜: ${formatDateForPrompt(formData.date)}`,
     `대회명: ${formData.tournamentName || "(미입력)"}`,
     `남은 인원 / 총 플레이어: ${formData.remainingPlayers || "?"} / ${formData.totalPlayers || "?"}`,
-    `블라인드: ${formData.blinds || "(미입력)"}`,
-    `엔티: ${formData.ante || "(미입력)"}`,
+    `블라인드: ${formData.blinds ? formatBlindsOrAnte(formData.blinds) : "(미입력)"}`,
+    `엔티: ${formData.ante ? formatBlindsOrAnte(formData.ante) : "(미입력)"}`,
     "",
     ...formatStreet("Pre-flop", formData.preFlop, false),
     "",

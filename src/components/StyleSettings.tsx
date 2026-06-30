@@ -18,6 +18,8 @@ export default function StyleSettings({
 }: StyleSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [draftExample, setDraftExample] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -39,6 +41,10 @@ export default function StyleSettings({
   };
 
   const handleRemoveExample = (index: number) => {
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setEditingText("");
+    }
     const next: ArticleStyleConfig = {
       ...styleConfig,
       examples: styleConfig.examples.filter((_, i) => i !== index),
@@ -46,6 +52,34 @@ export default function StyleSettings({
     };
     onChange(next);
     saveStyleConfig(next);
+  };
+
+  const handleStartEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditingText(styleConfig.examples[index]);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingText("");
+  };
+
+  const handleSaveEdit = () => {
+    if (editingIndex === null) return;
+    const trimmed = editingText.trim();
+    if (!trimmed) return;
+
+    const next: ArticleStyleConfig = {
+      ...styleConfig,
+      examples: styleConfig.examples.map((ex, i) =>
+        i === editingIndex ? trimmed : ex
+      ),
+      userCustomized: true,
+    };
+    onChange(next);
+    saveStyleConfig(next);
+    setEditingIndex(null);
+    setEditingText("");
   };
 
   const handleAnalyze = async () => {
@@ -97,6 +131,8 @@ export default function StyleSettings({
     onChange(DEFAULT_ARTICLE_STYLE);
     saveStyleConfig(DEFAULT_ARTICLE_STYLE);
     setDraftExample("");
+    setEditingIndex(null);
+    setEditingText("");
     setAnalyzeError(null);
     setShowPreview(false);
   };
@@ -127,18 +163,57 @@ export default function StyleSettings({
               {styleConfig.examples.map((ex, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2"
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-2"
                 >
-                  <p className="flex-1 line-clamp-3 text-xs text-gray-700">
-                    {ex}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExample(i)}
-                    className="shrink-0 text-xs text-red-500 hover:text-red-700"
-                  >
-                    삭제
-                  </button>
+                  {editingIndex === i ? (
+                    <div className="space-y-2">
+                      <textarea
+                        className="input-field min-h-[120px] w-full resize-y font-mono text-xs"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveEdit}
+                          disabled={!editingText.trim()}
+                          className="text-xs font-medium text-brand hover:underline disabled:text-gray-400"
+                        >
+                          저장
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <p className="flex-1 line-clamp-3 text-xs text-gray-700">
+                        {ex}
+                      </p>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(i)}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          수정
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExample(i)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

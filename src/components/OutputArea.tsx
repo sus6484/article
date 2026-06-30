@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
 
 interface OutputAreaProps {
   article: string;
   shortsTitles: string[];
   onCopyArticle: () => void;
   onRefreshArticle: (revisionNote: string) => void;
-  onRefreshTitles: () => void;
+  onRefreshTitles: (revisionNote: string) => void;
   isRefreshingArticle: boolean;
   isRefreshingTitles: boolean;
   isGenerating: boolean;
@@ -26,6 +25,7 @@ export default function OutputArea({
 }: OutputAreaProps) {
   const [copied, setCopied] = useState(false);
   const [revisionNote, setRevisionNote] = useState("");
+  const [titleRevisionNote, setTitleRevisionNote] = useState("");
 
   const handleCopy = async () => {
     onCopyArticle();
@@ -46,7 +46,7 @@ export default function OutputArea({
                 onChange={(e) => setRevisionNote(e.target.value)}
                 placeholder="수정 요구사항 (선택)"
                 disabled={isRefreshingArticle}
-                className="input-field w-44 py-1.5 text-xs sm:w-52"
+                className="input-field w-44 sm:w-52"
               />
               <button
                 type="button"
@@ -76,9 +76,9 @@ export default function OutputArea({
               </div>
             </div>
           ) : article ? (
-            <article className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-li:text-gray-700">
-              <ReactMarkdown>{article}</ReactMarkdown>
-            </article>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+              {article}
+            </div>
           ) : (
             <div className="flex h-40 items-center justify-center">
               <p className="text-sm text-gray-400">
@@ -93,14 +93,24 @@ export default function OutputArea({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-bold text-gray-900">쇼츠 제목 추천</h3>
           {article && (
-            <button
-              type="button"
-              onClick={onRefreshTitles}
-              disabled={isRefreshingTitles}
-              className="btn-secondary"
-            >
-              {isRefreshingTitles ? "생성 중..." : "제목 새로고침"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={titleRevisionNote}
+                onChange={(e) => setTitleRevisionNote(e.target.value)}
+                placeholder="수정 요구사항 (선택)"
+                disabled={isRefreshingTitles}
+                className="input-field w-44 sm:w-52"
+              />
+              <button
+                type="button"
+                onClick={() => onRefreshTitles(titleRevisionNote)}
+                disabled={isRefreshingTitles}
+                className="btn-secondary"
+              >
+                {isRefreshingTitles ? "생성 중..." : "제목 새로고침"}
+              </button>
+            </div>
           )}
         </div>
 

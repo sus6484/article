@@ -11,6 +11,7 @@ import {
   saveStyleConfig,
 } from "@/lib/article-style";
 import { loadHandsData, saveHandsData } from "@/lib/hands-storage";
+import { normalizeHandFormChipFields } from "@/lib/chip-format";
 import { createNewHand, Hand, HandFormData } from "@/lib/types";
 
 export default function HomePage() {
@@ -83,12 +84,15 @@ export default function HomePage() {
     setIsGenerating(true);
     setError(null);
 
+    const normalizedFormData = normalizeHandFormChipFields(activeHand.formData);
+    updateActiveHand({ formData: normalizedFormData });
+
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          formData: activeHand.formData,
+          formData: normalizedFormData,
           styleConfig: styleConfig ?? undefined,
         }),
       });
@@ -100,6 +104,7 @@ export default function HomePage() {
       }
 
       updateActiveHand({
+        formData: data.formData ?? normalizedFormData,
         article: data.article,
         shortsTitles: data.shortsTitles ?? [],
       });
@@ -125,12 +130,15 @@ export default function HomePage() {
     setIsRefreshingArticle(true);
     setError(null);
 
+    const normalizedFormData = normalizeHandFormChipFields(activeHand.formData);
+    updateActiveHand({ formData: normalizedFormData });
+
     try {
       const res = await fetch("/api/refresh-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          formData: activeHand.formData,
+          formData: normalizedFormData,
           article: activeHand.article,
           styleConfig: styleConfig ?? undefined,
           revisionNote,
@@ -144,6 +152,7 @@ export default function HomePage() {
       }
 
       updateActiveHand({
+        formData: data.formData ?? normalizedFormData,
         article: data.article,
         shortsTitles: data.shortsTitles ?? [],
       });
@@ -154,7 +163,7 @@ export default function HomePage() {
     }
   };
 
-  const handleRefreshTitles = async () => {
+  const handleRefreshTitles = async (revisionNote: string) => {
     if (!activeHand.article) return;
 
     setIsRefreshingTitles(true);
@@ -167,6 +176,7 @@ export default function HomePage() {
         body: JSON.stringify({
           article: activeHand.article,
           formData: activeHand.formData,
+          revisionNote,
         }),
       });
 

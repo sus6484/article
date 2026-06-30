@@ -1,4 +1,8 @@
 import { DEFAULT_ARTICLE_STYLE } from "@/lib/article-style";
+import {
+  formatBlindsAnteInArticle,
+  normalizeHandFormChipFields,
+} from "@/lib/chip-format";
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/gemini";
 import {
@@ -27,7 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const handData = formatHandDataForPrompt(formData);
+    const normalizedFormData = normalizeHandFormChipFields(formData);
+    const handData = formatHandDataForPrompt(normalizedFormData);
     const effectiveStyle = styleConfig?.userCustomized
       ? styleConfig
       : DEFAULT_ARTICLE_STYLE;
@@ -49,10 +54,12 @@ ${handData}`;
       userPrompt
     );
     const { article: newArticle, shortsTitles } = parseShortsTitles(rawContent);
+    const formattedArticle = formatBlindsAnteInArticle(newArticle || rawContent);
 
     return NextResponse.json({
-      article: newArticle || rawContent,
+      article: formattedArticle,
       shortsTitles,
+      formData: normalizedFormData,
     });
   } catch (error) {
     console.error("Refresh article error:", error);

@@ -82,6 +82,7 @@ export interface GenerateRequest {
 export interface RefreshTitlesRequest {
   article: string;
   formData: HandFormData;
+  revisionNote?: string;
 }
 
 export interface RefreshArticleRequest {

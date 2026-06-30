@@ -1,5 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { formatBlindsOrAnte } from "@/lib/chip-format";
+import {
+  combineDateParts,
+  DateParts,
+  parseDateParts,
+} from "@/lib/date-format";
 import {
   ActionEntry,
   CardOpenEntry,
@@ -171,11 +178,41 @@ export default function InputForm({
   onGenerate,
   isGenerating,
 }: InputFormProps) {
+  const [dateParts, setDateParts] = useState<DateParts>(() =>
+    parseDateParts(formData.date ?? "")
+  );
+
+  useEffect(() => {
+    setDateParts(parseDateParts(formData.date ?? ""));
+  }, [formData.date]);
+
   const update = <K extends keyof HandFormData>(
     field: K,
     value: HandFormData[K]
   ) => {
     onChange({ ...formData, [field]: value });
+  };
+
+  const formatChipField = (field: "blinds" | "ante") => {
+    const value = formData[field];
+    if (!value.trim()) return;
+    const formatted = formatBlindsOrAnte(value);
+    if (formatted !== value) {
+      update(field, formatted);
+    }
+  };
+
+  const updateDatePart = (field: keyof DateParts, value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    const next = { ...dateParts, [field]: cleaned };
+    setDateParts(next);
+
+    const combined = combineDateParts(next.year, next.month, next.day);
+    if (combined) {
+      update("date", combined);
+    } else if (!next.year && !next.month && !next.day) {
+      update("date", "");
+    }
   };
 
   return (
@@ -186,12 +223,44 @@ export default function InputForm({
 
       <div>
         <label className="label-text">날짜</label>
-        <input
-          type="date"
-          className="input-field"
-          value={formData.date ?? ""}
-          onChange={(e) => update("date", e.target.value)}
-        />
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className="mb-1 block text-xs text-gray-500">년</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="input-field"
+              placeholder="2026"
+              maxLength={4}
+              value={dateParts.year}
+              onChange={(e) => updateDatePart("year", e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-gray-500">월</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="input-field"
+              placeholder="2"
+              maxLength={2}
+              value={dateParts.month}
+              onChange={(e) => updateDatePart("month", e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-gray-500">일</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="input-field"
+              placeholder="5"
+              maxLength={2}
+              value={dateParts.day}
+              onChange={(e) => updateDatePart("day", e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <div>
@@ -232,8 +301,10 @@ export default function InputForm({
           <input
             type="text"
             className="input-field"
+            placeholder="예: 50K/100K"
             value={formData.blinds}
             onChange={(e) => update("blinds", e.target.value)}
+            onBlur={() => formatChipField("blinds")}
           />
         </div>
 
@@ -242,8 +313,10 @@ export default function InputForm({
           <input
             type="text"
             className="input-field"
+            placeholder="예: 100K"
             value={formData.ante}
             onChange={(e) => update("ante", e.target.value)}
+            onBlur={() => formatChipField("ante")}
           />
         </div>
       </div>
